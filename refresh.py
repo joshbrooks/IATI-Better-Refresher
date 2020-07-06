@@ -54,10 +54,11 @@ def main():
     meta = MetaData(engine)
     meta.reflect()
 
+    all_datasets = fetch_datasets()
+    new_count = 0
+
     try:
         datasets = Table(DATA_TABLENAME, meta, autoload=True)
-        all_datasets = fetch_datasets()
-        new_count = 0
     except sqlalchemy.exc.NoSuchTableError:  # First run
         datasets = Table(
             DATA_TABLENAME,
@@ -70,8 +71,7 @@ def main():
             Column('stale', Boolean, unique=False, default=False)  # Marks whether a dataset is scheduled for deletion
         )
         meta.create_all(engine)
-        all_datasets = fetch_datasets()
-        new_count = len(all_datasets)
+        new_count += len(all_datasets)
         conn.execute(datasets.insert(), all_datasets)
 
     all_dataset_ids = [dataset["id"] for dataset in all_datasets]
