@@ -68,7 +68,8 @@ def main():
             Column('url', String),
             Column('new', Boolean, unique=False, default=True),  # Marks whether a dataset is brand new
             Column('modified', Boolean, unique=False, default=False),  # Marks whether a dataset is old but modified
-            Column('stale', Boolean, unique=False, default=False)  # Marks whether a dataset is scheduled for deletion
+            Column('stale', Boolean, unique=False, default=False),  # Marks whether a dataset is scheduled for deletion
+            Column('error', Boolean, unique=False, default=False)
         )
         meta.create_all(engine)
         new_count += len(all_datasets)
@@ -94,6 +95,7 @@ def main():
                 dataset["new"] = 0
                 dataset["modified"] = 1
                 dataset["stale"] = 0  # If for some reason, we pick up a previously stale dataset
+                dataset["error"] = 0
                 conn.execute(datasets.update().where(datasets.c.id == dataset["id"]).values(dataset))
                 modified_count += 1
 

@@ -1,8 +1,9 @@
 import os
+import argparse
 import requests
 import progressbar
 import sqlalchemy
-from sqlalchemy import create_engine, MetaData, or_, Table
+from sqlalchemy import and_, create_engine, MetaData, or_, Table
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
@@ -40,7 +41,7 @@ def download_file(download_url, file_destination):
         return file_destination
 
 
-def main():
+def main(args):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     data_path = os.path.join(dir_path, "data")
     if not os.path.isdir(data_path):
@@ -55,19 +56,30 @@ def main():
     except sqlalchemy.exc.NoSuchTableError:
         raise ValueError("No database found. Try running `refresh.py` first.")
 
-    new_datasets = conn.execute(datasets.select().where(or_(datasets.c.new == 1, datasets.c.modified == 1))).fetchall()
+    if args.errors:
+        dataset_filter = datasets.c.error == 1
+    else:
+        dataset_filter = and_(
+            or_(
+                datasets.c.new == 1,
+                datasets.c.modified == 1
+            ),
+            datasets.c.error == 0
+        )
+
+    new_datasets = conn.execute(datasets.select().where(dataset_filter)).fetchall()
     bar = progressbar.ProgressBar()
-    print("Downloading {} new or modified datasets...".format(len(new_datasets)))
+    print("Downloading {} datasets...".format(len(new_datasets)))
     download_errors = 0
     for dataset in bar(new_datasets):
         file_destination = os.path.join(data_path, dataset["id"])
         try:
             download_file(dataset["url"], file_destination)
-            conn.execute(datasets.update().where(datasets.c.id == dataset["id"]).values(new=0, modified=0, stale=0))
-        except requests.exceptions.ConnectionError:
+            conn.execute(datasets.update().where(datasets.c.id == dataset["id"]).values(new=0, modified=0, stale=0, error=0))
+        except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
             download_errors += 1
-            continue
-    print("Failed to download {} new or modified datasets.".format(download_errors))
+            conn.execute(datasets.update().where(datasets.c.id == dataset["id"]).values(error=1))
+    print("Failed to download {} datasets.".format(download_errors))
 
     stale_datasets = conn.execute(datasets.select().where(datasets.c.stale == 1)).fetchall()
     print("Deleting stale {} stale datasets...".format(len(stale_datasets)))
@@ -80,4 +92,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='Load IATI Registry packages.')
+    parser.add_argument('-e', '--errors', dest='errors', action='store_true', default=False, help="Attempt to download previous errors")
+    args = parser.parse_args()
+    main(args)
