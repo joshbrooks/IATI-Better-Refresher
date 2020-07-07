@@ -32,7 +32,7 @@ def requests_retry_session(
 
 
 def download_file(download_url, file_destination):
-    with requests_retry_session(retries=3).get(url=download_url, timeout=5, stream=True) as r:
+    with requests_retry_session(retries=3).get(url=download_url, timeout=5, stream=True, verify=False) as r:
         r.raise_for_status()
         with open(file_destination, 'wb') as f:
             for chunk in r.iter_content(chunk_size=8192):
