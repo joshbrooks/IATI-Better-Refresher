@@ -11,8 +11,12 @@ pip install -r requirements.txt
 ## Operation
 ```
 python3 refresh.py
+python3 reload.py
+# To retry errored downloads
+python3 reload.py -e
 ```
 
 ## To do
 
-- Do something with the `new`, `modified`, and `stale` statuses.
+- Better logging
+- More optimization
