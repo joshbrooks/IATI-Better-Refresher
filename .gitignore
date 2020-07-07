@@ -1,6 +1,7 @@
-# XML files
+# Data
 data
 starter_kit.zip
+*.csv
 
 # sqlite database
 iati.db
