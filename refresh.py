@@ -76,8 +76,9 @@ def main():
         conn.execute(datasets.insert(), all_datasets)
 
     all_dataset_ids = [dataset["id"] for dataset in all_datasets]
-    stale_datasets = conn.execute(datasets.select().where(datasets.c.id.notin_(all_dataset_ids))).fetchall()
-    stale_dataset_ids = [dataset["id"] for dataset in stale_datasets]
+    cached_datasets = conn.execute(datasets.select()).fetchall()
+    cached_dataset_ids = [dataset["id"] for dataset in cached_datasets]
+    stale_dataset_ids = list(set(cached_dataset_ids) - set(all_dataset_ids))
     conn.execute(datasets.update().where(datasets.c.id.in_(stale_dataset_ids)).values(new=0, modified=0, stale=1))
 
     stale_count = len(stale_dataset_ids)
