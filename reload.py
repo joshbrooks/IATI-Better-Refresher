@@ -6,6 +6,10 @@ import sqlalchemy
 from sqlalchemy import and_, create_engine, MetaData, or_, Table
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
 DATA_TABLENAME = "datasets"
