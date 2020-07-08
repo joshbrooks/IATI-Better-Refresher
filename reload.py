@@ -86,7 +86,7 @@ def main(args):
     print("Failed to download {} datasets.".format(download_errors))
 
     stale_datasets = conn.execute(datasets.select().where(datasets.c.stale == 1)).fetchall()
-    print("Deleting stale {} stale datasets...".format(len(stale_datasets)))
+    print("Deleting {} stale datasets...".format(len(stale_datasets)))
     for dataset in stale_datasets:
         file_destination = os.path.join(data_path, dataset["id"])
         os.remove(file_destination)
