@@ -89,7 +89,10 @@ def main(args):
     print("Deleting {} stale datasets...".format(len(stale_datasets)))
     for dataset in stale_datasets:
         file_destination = os.path.join(data_path, dataset["id"])
-        os.remove(file_destination)
+        try:
+            os.remove(file_destination)
+        except FileNotFoundError:
+            pass
         conn.execute(datasets.delete().where(datasets.c.id == dataset["id"]))
 
     engine.dispose()
